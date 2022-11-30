@@ -2,9 +2,27 @@ package main
 
 import (
 	"log"
+	"strconv"
 
+	"github.com/buger/jsonparser"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
+
+type generatorJobs struct {
+	Idtrxkeluarandetail string
+	Idtrxkeluaran       string
+	Datetimedetail      string
+	Company             string
+	Username            string
+	Nomortogel          string
+	create              string
+	createDate          string
+}
+type generatorResult struct {
+	Idtrxkeluarandetail string
+	Message             string
+	Status              string
+}
 
 func failOnError(err error, msg string) {
 	if err != nil {
@@ -42,10 +60,31 @@ func main() {
 	failOnError(err, "Failed to register a consumer")
 
 	var forever chan struct{}
-
+	// totalWorker := 100
 	go func() {
 		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
+			json := []byte(d.Body)
+			jsonparser.ArrayEach(json, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+				Totaldata, _, _, _ := jsonparser.Get(value, "Totaldata")
+				Record, _, _, _ := jsonparser.Get(value, "Record")
+
+				// json := []byte(d.Body)
+				jsonparser.ArrayEach(Record, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+					Idtrxkeluarandetail, _, _, _ := jsonparser.Get(value, "Idtrxkeluarandetail")
+					log.Printf("%s", Idtrxkeluarandetail)
+				})
+
+				total_bet, _ := strconv.Atoi(string(Totaldata))
+				log.Printf("%s", total_bet)
+				// buffer_bet := total_bet + 1
+				// jobs_bet := make(chan generatorJobs, buffer_bet)
+				// results_bet := make(chan generatorResult, buffer_bet)
+				// wg := &sync.WaitGroup{}
+				// for w := 0; w < totalWorker; w++ {
+				// wg.Add(1)
+				// go _doJobInsertTransaksi(fieldtable, jobs_bet, results_bet, wg)
+				// }
+			})
 		}
 	}()
 
