@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  consumer:
+    container_name: consumer
+    build:
+      context: .
+      dockerfile: Dockerfile-consumer
+    environment:
+      AMQP_SERVER_URL: amqp://guest:guest@157.230.255.100:5672/
+    restart: always
+    networks:
+      - dev-network
+    depends_on:
+      - sender
+      - message-broker
