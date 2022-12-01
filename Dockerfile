@@ -1,25 +1,30 @@
-FROM golang:1.16-alpine AS builder
+FROM golang:alpine AS agenconsumergeneratorbuilds
 
-# Move to working directory (/build).
-WORKDIR /build
+WORKDIR /appbuilds
 
-# Copy and download dependency using go mod.
-COPY go.mod go.sum ./
-RUN go mod download
+COPY . .
 
-# Copy the code into the container.
-COPY ./consumer/main.go .
+RUN go mod tidy
+RUN go build -o binary
 
-# Set necessary environment variables needed 
-# for our image and build the consumer.
-ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
-RUN go build -ldflags="-s -w" -o consumer .
 
-FROM scratch
+FROM alpine:latest as agenconsumergeneratorrelease
+WORKDIR /app
+RUN apk add tzdata
+COPY --from=agenconsumergeneratorbuilds /appbuilds/binary .
+COPY --from=agenconsumergeneratorbuilds /appbuilds/.env /app/.env
+ENV DB_USER="sperma"
+ENV DB_PASS="asdQWE123!@#"
+ENV DB_HOST="128.199.124.131"
+ENV DB_PORT="3306"
+ENV DB_NAME="db_tot"
+ENV DB_DRIVER="mysql"
+ENV DB_REDIS_HOST="128.199.124.131:6379"
+ENV DB_REDIS_PASSWORD="asdQWE123!@#"
+ENV DB_REDIS_NAME="0"
+ENV AMQP_SERVER_URL="amqp://guest:guest@157.230.255.100:5672/"
+ENV TZ=Asia/Jakarta
 
-# Copy binary and config files from /build 
-# to root folder of scratch container.
-COPY --from=builder ["/build/consumer", "/"]
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Command to run when starting the container.
-ENTRYPOINT ["/consumer"]
+ENTRYPOINT [ "./binary" ]

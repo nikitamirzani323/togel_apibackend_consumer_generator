@@ -1,16 +1,8 @@
-version: "3.9"
+version: '2'
 
 services:
-  consumer:
-    container_name: consumer
-    build:
-      context: .
-      dockerfile: Dockerfile-consumer
-    environment:
-      AMQP_SERVER_URL: amqp://guest:guest@157.230.255.100:5672/
+  toto-consumer-agen-generator:
+    container_name: toto-consumer-agen-generator
+    image: toto-consumer-agen-generator:0.0.1
+    build: .
     restart: always
-    networks:
-      - dev-network
-    depends_on:
-      - sender
-      - message-broker
